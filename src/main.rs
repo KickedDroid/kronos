@@ -22,7 +22,7 @@ pub struct Config {
 #[clap(author, version, about, long_about = None)]
 struct Args {
     #[clap(short, long)]
-    auto: bool,
+    disable_auto: bool,
 }
 
 #[tokio::main]
@@ -35,7 +35,7 @@ async fn main() {
     let mut config: Config = toml::from_str(toml_string.as_str()).expect("Failed to read config.toml");
 
     let mut auto = true;
-    if args.auto {
+    if args.disable_auto {
         auto = false;
     }
 
