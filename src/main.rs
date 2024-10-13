@@ -147,7 +147,7 @@ async fn submit_flag(flag: &str, config: &Config) -> bool {
         Ok(res) => {
             if let Ok(text) = res.text().await {
                 println!("{}", text);
-                text.contains("owned.")
+                text.contains("pwned.")
             } else {
                 false
             }
