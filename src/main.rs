@@ -100,22 +100,26 @@ async fn main() {
                     stdin()
                         .read_line(&mut s)
                         .expect("Please Enter a valid string");
-                    match s.chars().next_back() {
-                        Some('y') => {
-                            println!("[+] Sending Flag");
-                            let result = submit_flag(&content, &config).await;
-                            if result {
-                                println!("Congrats the flag was submited!!");
-                                match now.elapsed() {
-                                    Ok(time) => println!("[+] Time: {}", time.as_secs() / 60 / 60),
-                                    Err(e) => eprintln!("SHit {}", e),
+                    if let Some(char) = s.chars().next() {
+                        match char {
+                            'y' => {
+                                println!("[+] Sending Flag");
+                                let result = submit_flag(&content, &config).await;
+                                if result {
+                                    println!("Congrats the flag was submited!!");
+                                    match now.elapsed() {
+                                        Ok(time) => {
+                                            println!("[+] Time: {}", time.as_secs() / 60 / 60)
+                                        }
+                                        Err(e) => eprintln!("SHit {}", e),
+                                    }
+                                } else {
+                                    println!("[-] Sorry Wrong Flag :( or something happened, try submitting the flag and reporting to me about what happened.")
                                 }
-                            } else {
-                                println!("[-] Sorry Wrong Flag :( or something happened, try submitting the flag and reporting to me about what happened.")
                             }
+                            'n' => println!("Ignoring conntents"),
+                            _ => println!("y/n only"),
                         }
-                        Some('n') => println!("Ignoring conntents"),
-                        _ => println!("y/n only"),
                     }
                 }
             }
@@ -133,7 +137,10 @@ enum SessionType {
 fn session_type() -> SessionType {
     if let Ok(session_type) = std::env::var("XDG_SESSION_TYPE") {
         match session_type.as_str() {
-            "x11" => SessionType::X11,
+            "x11" => {
+                println!("[+] Running on X11");
+                SessionType::X11
+            }
             "wayland" => {
                 println!("[+] Running on Wayland.");
                 SessionType::Wayland
