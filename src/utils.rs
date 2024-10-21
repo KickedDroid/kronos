@@ -1,23 +1,31 @@
 use clap::Parser;
 use reqwest::header::HeaderMap;
-
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
 const TARGET_STRING: &str = "27b47455f301788ebf9f85d0d1aa90d5";
 const API_URL: &str = "https://labs.hackthebox.com/";
 use reqwest::Client;
 use serde_json::json;
-
+use std::io::{Read, Result};
+use std::path::PathBuf;
 #[derive(Deserialize)]
 pub struct Config {
     pub htb: HashMap<String, String>,
 }
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(name = "Kronos")]
+#[clap(version = "0.1")]
+#[clap(about = "keep track of the hack")]
+#[clap(long_about = None)]
 pub struct Args {
-    #[clap(short, long)]
+    #[clap(short, long, long_help = "Disable auto flag submission")]
     pub disable_auto: bool,
+    #[clap(default_value = "./", long_help = "Output directory")]
+    pub output: PathBuf,
+    #[clap(default_value = "htb", long_help = "Session name")]
+    pub name: PathBuf,
 }
 
 pub fn is_valid_hex(s: &str) -> bool {
@@ -27,6 +35,7 @@ pub fn is_valid_hex(s: &str) -> bool {
             _ => return false,
         }
     }
+    assert!(s.len() == TARGET_STRING.len());
     true
 }
 
@@ -96,8 +105,8 @@ pub async fn submit_flag(flag: &str, config: &Config) -> bool {
         Ok(res) => {
             if let Ok(text) = res.text().await {
                 //println!("{}", text);
-                handle_response(text).await;
-                true
+                let res = handle_response(text).await;
+                res
             } else {
                 false
             }
@@ -110,9 +119,27 @@ async fn handle_response(response: String) -> bool {
     if response.contains("pwned") {
         println!("Congrats the flag was submited!!");
         true
-    } else {
+    } else if response.contains("Incorrect") {
+        println!("[-] Sorry Wrong Flag :(");
         println!("{response}");
-        println!("[-] Sorry Wrong Flag :( or something happened, try submitting the flag and reporting to me about what happened.");
+        false
+    } else {
+        println!("[-] Error handling response");
+        println!("{response}");
         false
     }
+}
+
+pub fn open_or_create_file(filename: &str) -> Result<File> {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(filename)?;
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    Ok(file)
 }
